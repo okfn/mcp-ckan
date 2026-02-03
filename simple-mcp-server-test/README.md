@@ -1,0 +1,2 @@
+# Simple MCP server test
+
