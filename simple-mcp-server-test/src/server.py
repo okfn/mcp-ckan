@@ -19,16 +19,7 @@ def create_mcp_server():
     """Create MCP server with settings from environment variables"""
     host = os.getenv("MCP_HOST", "127.0.0.1")
     port = int(os.getenv("MCP_PORT", "8063"))
-    # For remote deployment, we need to accept the public domain
-    # The server will still bind to localhost, but accept the public Host header
-    return FastMCP(
-        "Demo",
-        host=host,
-        port=port,
-        streamable_http_path="/",
-        # Disable host validation for reverse proxy setups
-        transport_security=None
-    )
+    return FastMCP("Demo", host=host, port=port, streamable_http_path="/")
 
 
 # Create server instance
