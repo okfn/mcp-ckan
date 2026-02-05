@@ -140,3 +140,36 @@ def register_tools(mcp):
             "url": url,
             "csv": csv
         })
+
+    @mcp.tool()
+    def paises_con_prestamos_bcie():
+        """Get list of all countries that receive loans from BCIE.
+
+        This tool fetches the current list of countries that have received approved loans
+        from the BCIE (Central American Bank for Economic Integration).
+
+        Returns:
+            str: A formatted list of all countries that receive BCIE loans, including
+                the total number of countries and the complete list of country names.
+
+        Examples:
+            - paises_con_prestamos_bcie() - Get all countries with BCIE loans
+        """
+        csv = "https://datosabiertos.bcie.org/dataset/45876cb4-d8b8-4635-b999-0df1c19b831a/resource/ce88a753-57f5-4266-a57e-394600c8435d/download/aprobaciones-prestamos.csv"
+
+        # Load the CSV data
+        df = pd.read_csv(csv)
+
+        # Get unique countries and sort them
+        countries = sorted(df['PAIS'].unique())
+
+        # Format response
+        response = f"El BCIE (Banco Centroamericano de Integración Económica) otorga préstamos a {len(countries)} países:\n\n"
+
+        # List countries with bullet points
+        for country in countries:
+            response += f"  • {country}\n"
+
+        response += "\nFuente de datos: https://datosabiertos.bcie.org/dataset/prestamos/resource/ce88a753-57f5-4266-a57e-394600c8435d"
+
+        return response
