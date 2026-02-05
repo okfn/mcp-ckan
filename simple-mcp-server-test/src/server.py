@@ -29,10 +29,54 @@ def _validate_year(year, min_year, max_year):
     return _validate_year(year_int, min_year, max_year)
 
 
+def _prepare_response(data):
+    """ We need to send a string response back to MCP clients
+        Here we prepare the response accordingly
+    """
+    if 'errors' in data:
+        return "There were errors. We cant respond. Please check:\n" + "\n".join(data['errors'])
+
+    pais = "para " + data['country'] if data['country'] else "para todos los países"
+    response = (
+        f"La cantidad total de préstamos aprobados por el BCIE {pais} "
+        f"fue de ${data['total_amount']:,.2f} "
+        f"entre los años {data['year_from']} y {data['year_to']}."
+    )
+    response += f"\nFuente de datos: {data['url']}"
+    response += f"\nCSV de datos: {data['csv']}"
+    return response
+
+
 @mcp.tool()
-def prestamos_por_pais(country, year_from=None, year_to=None):
-    """ Fetch loan data for a specific country and optional year range
-    Args:Country is not a CODE, is just the country name so we need to parse it accordingly
+def prestamos_por_pais(country=None, year_from=None, year_to=None):
+    """Get total approved loans from BCIE (Central American Bank for Economic Integration) by country and year range.
+
+    This tool fetches loan data from the BCIE open data portal and calculates the total
+    amount of approved loans based on the specified filters.
+
+    Args:
+        country (str, optional): Full country name (NOT a country code).
+            Examples: "Honduras", "Costa Rica", "El Salvador", "Guatemala", "Nicaragua", "Panamá".
+            If not provided, returns data for all countries combined.
+        year_from (int or str, optional): Starting year for the date range (inclusive).
+            Must be within the available data range. If not provided, uses the earliest available year.
+        year_to (int or str, optional): Ending year for the date range (inclusive).
+            Must be within the available data range. If not provided, uses the most recent available year.
+
+    Returns:
+        str: A formatted response containing:
+            - Total loan amount in USD (formatted with thousands separators)
+            - Country filter applied (or "all countries" if none specified)
+            - Year range used for the calculation
+            - Source URL and CSV data link
+
+            If there are validation errors (invalid country name, years out of range, etc.),
+            returns an error message with details about what went wrong.
+
+    Examples:
+        - prestamos_por_pais(country="Honduras") - All loans for Honduras
+        - prestamos_por_pais(country="Costa Rica", year_from=2020, year_to=2023) - Costa Rica loans 2020-2023
+        - prestamos_por_pais(year_from=2015) - All countries from 2015 onwards
     """
     url = "https://datosabiertos.bcie.org/dataset/prestamos/resource/ce88a753-57f5-4266-a57e-394600c8435d"
     csv = "https://datosabiertos.bcie.org/dataset/45876cb4-d8b8-4635-b999-0df1c19b831a/resource/ce88a753-57f5-4266-a57e-394600c8435d/download/aprobaciones-prestamos.csv"
@@ -47,7 +91,7 @@ def prestamos_por_pais(country, year_from=None, year_to=None):
 
     # valid countries
     valid_countries = df['PAIS'].unique()
-    if country not in valid_countries:
+    if country and country not in valid_countries:
         errors.append(f"Country '{country}' not found. Valid countries are: {', '.join(valid_countries)}")
 
     existent_year_range = (df['ANIO_APROBACION'].min(), df['ANIO_APROBACION'].max())
@@ -63,18 +107,34 @@ def prestamos_por_pais(country, year_from=None, year_to=None):
         return {"errors": errors}
 
     # Filter by country
-    df_country = df[df['PAIS'] == country]
+    if country:
+        df_country = df[df['PAIS'] == country]
+    else:
+        df_country = df
 
     # Filter by year range if provided
     if year_from is not None:
-        df_country = df_country[df_country['ANIO'] >= year_from]
+        df_country = df_country[df_country['ANIO_APROBACION'] >= year_from]
+    else:
+        # use this to prepare the future response
+        year_from = existent_year_range[0]
     if year_to is not None:
-        df_country = df_country[df_country['ANIO'] <= year_to]
+        df_country = df_country[df_country['ANIO_APROBACION'] <= year_to]
+    else:
+        # use this to prepare the future response
+        year_to = existent_year_range[1]
 
     # Sum all amounts from the specific country in the filtered DataFrame
     total_amount = df_country['MONTO_BRUTO_USD'].sum()
 
-    return {"total_amount": total_amount}
+    return _prepare_response({
+        "total_amount": total_amount,
+        "country": country,
+        "year_from": year_from,
+        "year_to": year_to,
+        "url": url,
+        "csv": csv
+    })
 
 
 # Run with configured transport
