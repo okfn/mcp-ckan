@@ -1,10 +1,10 @@
 import os
 import pandas as pd
-from mcp.server.mcpserver import MCPServer
+from mcp.server.fastmcp import FastMCP
 
 
 # Create an MCP server
-mcp = MCPServer("Demo")
+mcp = FastMCP("Demo")
 
 
 def _validate_year(year, min_year, max_year):
@@ -80,9 +80,7 @@ def prestamos_por_pais(country=None, year_from=None, year_to=None):
     """
     url = "https://datosabiertos.bcie.org/dataset/prestamos/resource/ce88a753-57f5-4266-a57e-394600c8435d"
     csv = "https://datosabiertos.bcie.org/dataset/45876cb4-d8b8-4635-b999-0df1c19b831a/resource/ce88a753-57f5-4266-a57e-394600c8435d/download/aprobaciones-prestamos.csv"
-    column_names = [
-        "PAIS", "ANIO_APROBACION", "SECTOR_INSTITUCIONAL", "MONTO_BRUTO_USD", "CANTIDAD_APROBACIONES"
-    ]
+    # column_names "PAIS", "ANIO_APROBACION", "SECTOR_INSTITUCIONAL", "MONTO_BRUTO_USD", "CANTIDAD_APROBACIONES"
 
     # Validate all before responding with errors
     errors = []
@@ -96,15 +94,21 @@ def prestamos_por_pais(country=None, year_from=None, year_to=None):
 
     existent_year_range = (df['ANIO_APROBACION'].min(), df['ANIO_APROBACION'].max())
 
-    # Validate year_from and year_to
+    # Validate and convert year_from and year_to
     valid, error = _validate_year(year_from, *existent_year_range)
     if not valid:
         errors.append(f"Invalid year_from: {error}")
+    elif year_from is not None:
+        year_from = int(year_from)
+
     valid, error = _validate_year(year_to, *existent_year_range)
     if not valid:
         errors.append(f"Invalid year_to: {error}")
+    elif year_to is not None:
+        year_to = int(year_to)
+
     if errors:
-        return {"errors": errors}
+        return _prepare_response({"errors": errors})
 
     # Filter by country
     if country:
