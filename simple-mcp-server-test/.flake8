@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 130
+max-complexity = 20
+count = true
+show-source = true
+statistics = true
+
+# Suma a los defaults de Flake8
+extend-exclude =
+    .venv,
+    venv,
+    env,
+    **/site-packages/**,
+    **/__pycache__/**,
+    build,
+    dist
