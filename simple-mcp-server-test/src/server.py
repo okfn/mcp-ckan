@@ -3,8 +3,14 @@ import pandas as pd
 from mcp.server.fastmcp import FastMCP
 
 
-# Create an MCP server
-mcp = FastMCP("Demo")
+# Create an MCP server with configurable settings
+def create_mcp_server():
+    """Create MCP server with settings from environment variables"""
+    host = os.getenv("MCP_HOST", "127.0.0.1")
+    port = int(os.getenv("MCP_PORT", "8063"))
+    return FastMCP("Demo", host=host, port=port, streamable_http_path="/")
+
+mcp = create_mcp_server()
 
 
 def _validate_year(year, min_year, max_year):
@@ -154,9 +160,8 @@ if __name__ == "__main__":
 
     if transport == "http":
         # HTTP mode for infrastructure deployment
-        host = os.getenv("MCP_HOST")
-        port = int(os.getenv("MCP_PORT"))
-        mcp.run(transport="streamable-http", host=host, port=port, json_response=True)
+        print(f"Starting MCP server in HTTP mode on {os.getenv('MCP_HOST')}:{os.getenv('MCP_PORT')}")
+        mcp.run(transport="streamable-http")
     else:
         # stdio mode (default) for local development
         mcp.run(transport="stdio")
