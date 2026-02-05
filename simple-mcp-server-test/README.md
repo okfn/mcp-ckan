@@ -18,9 +18,34 @@ MCP_TRANSPORT=stdio MCP_HOST=127.0.0.1 MCP_PORT=8063 .venv/bin/python src/server
 # For HTTP mode (infrastructure deployment)
 MCP_TRANSPORT=http MCP_HOST=127.0.0.1 MCP_PORT=8063 .venv/bin/python src/server.py
 
-Run inspector
+## Run the server
+
+```
+MCP_TRANSPORT=http MCP_HOST=127.0.0.1 MCP_PORT=8063 .venv/bin/python src/server.py
+```
+
+## Test in vscode with GH copilot
+
+Create the file `.vscode/mcp.json`
+
+{
+  "servers": {
+    "mybcie-server": {
+      "url": "http://127.0.0.1:8063",
+      "type": "http",
+    }
+  },
+  "inputs": []
+}
+
+## Run inspector
+
+This tool allow you to test tools locally without any AI model.
+
+```
 npx @modelcontextprotocol/inspector .venv/bin/python src/server.py
 MCP_TRANSPORT=stdio MCP_HOST=127.0.0.1 MCP_PORT=8063 npx @modelcontextprotocol/inspector .venv/bin/python src/server.py
+```
 
 ## Dynamic MCP tools
 
