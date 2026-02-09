@@ -1,14 +1,14 @@
 sources:
   - name: bcie-tools-loans
-    # https://github.com/avdata99/mcp-tool-bcie-loans
-    repo: git@github.com:avdata99/mcp-tool-bcie-loans.git
+    # https://github.com/okfn/mcp-tool-bcie-loans
+    repo: git@github.com:okfn/mcp-tool-bcie-loans.git
     path: tools
     ref: main
     key: keys/mcp-tool-bcie-loans
 
   - name: bcie-tools-disbursements
-    # https://github.com/avdata99/mcp-tool-bcie-disbursements
-    repo: git@github.com:avdata99/mcp-tool-bcie-disbursements.git
+    # https://github.com/okfn/mcp-tool-bcie-disbursements
+    repo: git@github.com:okfn/mcp-tool-bcie-disbursements.git
     path: tools
     ref: main
     key: keys/mcp-tool-bcie-disbursements
