@@ -79,7 +79,6 @@ If authentication fails, verify:
 - The public key was added to the correct repository
 - The repo URL uses SSH format (`git@...`), not HTTPS
 
-
 ## Security notes
 
 - **Never commit private keys.** This directory is gitignored but stay careful.

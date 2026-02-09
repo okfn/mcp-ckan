@@ -4,3 +4,7 @@
 __pycache__/
 remote_tools/
 tool_sources.yaml
+
+# Ignore all keys except the README.md file
+keys/*
+!keys/README.md
