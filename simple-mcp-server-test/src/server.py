@@ -8,11 +8,11 @@ Each tool module should have a register_tools(mcp) function.
 import os
 import sys
 from mcp.server.fastmcp import FastMCP
+from tools import load_tools
+
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
-
-from tools import load_tools
 
 
 def create_mcp_server():
