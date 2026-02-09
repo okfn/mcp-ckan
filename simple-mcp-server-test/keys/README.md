@@ -53,7 +53,7 @@ Then add it as a **read-only deploy key** on your git hosting platform:
 3. Paste the public key
 4. Title: `mcp-server-deploy`
 5. **Uncheck "Grant write permissions"** (read-only)
-6. Click **Add key**
+6. Click **Add key**.
 
 ### 3. Reference the key in tool_sources.yaml
 
