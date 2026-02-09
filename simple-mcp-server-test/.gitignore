@@ -2,3 +2,5 @@
 .env
 *.pyc
 __pycache__/
+remote_tools/
+tool_sources.yaml

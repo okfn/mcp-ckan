@@ -1,0 +1,35 @@
+# Remote tool repositories for MCP server
+#
+# Copy this file to tool_sources.yaml and adjust as needed.
+# Then run: python scripts/fetch_remote_tools.py
+#
+# Fields:
+#   name  - unique identifier, used as directory name in remote_tools/
+#   repo  - git clone URL (HTTPS for public, SSH for private repos)
+#   path  - directory within the repo containing tool .py files
+#   ref   - git ref to checkout (branch, tag, or commit hash)
+#   key   - (optional) path to SSH private key for private repos
+#
+# SSH keys for private repos:
+#   Store deploy keys in a directory like keys/ (gitignored).
+#   Each private repo can have its own deploy key specified via the
+#   "key" field. The fetch script passes it to git via GIT_SSH_COMMAND
+#   so no ~/.ssh/config changes are needed.
+#
+#   Generate a deploy key:
+#     ssh-keygen -t ed25519 -f keys/my-repo-key -N "" -C "deploy@mcp-server"
+#   Then add the .pub file as a deploy key in the repo settings.
+
+sources:
+  # Public repository example (HTTPS, no key needed)
+  - name: example-public-tools
+    repo: https://github.com/your-org/mcp-tools-public.git
+    path: src/tools
+    ref: main
+
+  # Private repository example (SSH + deploy key)
+  - name: example-private-tools
+    repo: git@github.com:your-org/mcp-tools-private.git
+    path: tools
+    ref: v1.0.0
+    key: keys/example-private-tools-key
