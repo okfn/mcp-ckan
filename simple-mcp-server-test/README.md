@@ -44,7 +44,12 @@ This tool allow you to test tools locally without any AI model.
 
 ```
 npx @modelcontextprotocol/inspector .venv/bin/python src/server.py
-MCP_TRANSPORT=stdio MCP_HOST=127.0.0.1 MCP_PORT=8063 npx @modelcontextprotocol/inspector .venv/bin/python src/server.py
+```
+
+Also, you can start the inspector with the server settings ready:
+
+```
+MCP_TRANSPORT=http MCP_HOST=127.0.0.1 MCP_PORT=8063 npx @modelcontextprotocol/inspector .venv/bin/python src/server.py
 ```
 
 ## Dynamic MCP tools
