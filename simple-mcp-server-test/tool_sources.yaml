@@ -1,0 +1,6 @@
+sources:
+  - name: bcie-tools
+    repo: git@github.com:avdata99/mcp-tool-bcie-loans.git
+    path: tools
+    ref: main
+    key: keys/mcp-tool-bcie-loans
