@@ -46,6 +46,7 @@ from mcp_server.engines.formatters import (
     validate_format,
     format_values_csv,
     format_values_json,
+    format_values_table,
 )
 
 ENGINE_NAME = "unique_values"
@@ -83,6 +84,8 @@ def load_unique_values_dataset(mcp, config, yaml_path):
         # Handle non-text formats (no limit applied - return all values)
         if output_format == "csv":
             return format_values_csv(values, column)
+        if output_format == "table":
+            return format_values_table(values, column)
         if output_format == "json":
             return format_values_json(values, column)
 

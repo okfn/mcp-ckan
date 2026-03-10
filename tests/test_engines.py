@@ -518,6 +518,38 @@ class TestOutputFormatRowList(unittest.TestCase):
 class TestOutputFormatTopRow(unittest.TestCase):
     """output_format parameter works for top_row engine"""
 
+    def test_csv_format(self):
+        asyncio.run(self._test_csv())
+
+    async def _test_csv(self):
+        async with stdio_client(SERVER_PARAMS) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool(
+                    "top_project", arguments={"output_format": "csv"}
+                )
+                self.assertFalse(result.isError)
+                text = result.content[0].text
+                lines = text.strip().split("\n")
+                self.assertEqual(len(lines), 2)  # header + 1 row
+                self.assertIn("Country", lines[0])
+                self.assertIn("Chile", text)
+
+    def test_table_format(self):
+        asyncio.run(self._test_table())
+
+    async def _test_table(self):
+        async with stdio_client(SERVER_PARAMS) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool(
+                    "top_project", arguments={"output_format": "table"}
+                )
+                self.assertFalse(result.isError)
+                text = result.content[0].text
+                self.assertIn("|", text)
+                self.assertIn("Chile", text)
+
     def test_json_format(self):
         asyncio.run(self._test_json())
 
@@ -553,6 +585,22 @@ class TestOutputFormatUniqueValues(unittest.TestCase):
                 self.assertIn("COUNTRY", text)
                 lines = text.strip().split("\n")
                 self.assertEqual(len(lines), 4)  # header + 3 countries
+
+    def test_table_format(self):
+        asyncio.run(self._test_table())
+
+    async def _test_table(self):
+        async with stdio_client(SERVER_PARAMS) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool(
+                    "project_countries", arguments={"output_format": "table"}
+                )
+                self.assertFalse(result.isError)
+                text = result.content[0].text
+                self.assertIn("|", text)
+                self.assertIn("COUNTRY", text)
+                self.assertIn("Argentina", text)
 
     def test_json_format(self):
         asyncio.run(self._test_json())

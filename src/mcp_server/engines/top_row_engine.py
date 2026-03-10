@@ -60,6 +60,8 @@ from mcp_server.engines.formatters import (
     get_output_format_param,
     get_format_doc_line,
     validate_format,
+    format_dataframe_csv,
+    format_dataframe_table,
 )
 
 ENGINE_NAME = "top_row"
@@ -107,7 +109,17 @@ def load_top_row_dataset(mcp, config, yaml_path):
 
         result = fmt.format(result=row[column])
 
-        # Handle JSON format
+        # Handle non-text formats
+        if output_format in ("csv", "table"):
+            columns_config = [
+                {"column": f["column"], "label": f.get("label", f["column"])}
+                for f in show
+            ]
+            row_df = pd.DataFrame([row])
+            if output_format == "csv":
+                return format_dataframe_csv(row_df, columns_config)
+            return format_dataframe_table(row_df, columns_config)
+
         if output_format == "json":
             row_data = {}
             for field in show:

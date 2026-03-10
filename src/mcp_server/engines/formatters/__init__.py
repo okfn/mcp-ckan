@@ -21,8 +21,8 @@ ENGINE_FORMATS = {
         "image-chart",
     ],
     "row_list": ["text", "csv", "table", "json"],
-    "top_row": ["text", "json"],
-    "unique_values": ["text", "csv", "json"],
+    "top_row": ["text", "csv", "table", "json"],
+    "unique_values": ["text", "csv", "table", "json"],
 }
 
 
@@ -206,6 +206,13 @@ def format_values_csv(values, column_name):
     lines = [column_name]
     lines.extend(str(v) for v in values)
     return "\n".join(lines)
+
+
+def format_values_table(values, column_name):
+    """Format a list of values as a markdown table."""
+    import pandas as pd
+    df = pd.DataFrame({column_name: [str(v) for v in values]})
+    return df.to_markdown(index=False)
 
 
 def format_values_json(values, column_name):
