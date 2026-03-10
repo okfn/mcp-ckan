@@ -51,10 +51,18 @@ YAML config example:
 """
 
 import inspect
+import json
 
 import pandas as pd
 
 from mcp_server.engines.filters import build_filter_params, apply_filters, build_filter_doc
+from mcp_server.engines.formatters import (
+    get_output_format_param,
+    get_format_doc_line,
+    validate_format,
+)
+
+ENGINE_NAME = "top_row"
 
 
 def load_top_row_dataset(mcp, config, yaml_path):
@@ -73,8 +81,15 @@ def load_top_row_dataset(mcp, config, yaml_path):
     response_template = tool_cfg.get("response")
 
     filter_params = build_filter_params(tool_cfg)
+    filter_params.append(get_output_format_param(ENGINE_NAME))
 
     def tool_fn(**kwargs):
+        output_format = kwargs.pop("output_format", "text")
+
+        error = validate_format(output_format, ENGINE_NAME)
+        if error:
+            return error
+
         read_kwargs = {"sep": separator} if separator else {}
         df = pd.read_csv(csv_url, **read_kwargs)
         try:
@@ -92,6 +107,27 @@ def load_top_row_dataset(mcp, config, yaml_path):
 
         result = fmt.format(result=row[column])
 
+        # Handle JSON format
+        if output_format == "json":
+            row_data = {}
+            for field in show:
+                label = field.get("label", field["column"])
+                row_data[label] = row[field["column"]]
+                # Convert numpy types to native Python types
+                if hasattr(row_data[label], "item"):
+                    row_data[label] = row_data[label].item()
+            result_data = {
+                "value": row[column].item() if hasattr(row[column], "item") else row[column],
+                "formatted": result,
+                "row": row_data,
+            }
+            if filter_label:
+                result_data["filter"] = filter_label
+            if source_url:
+                result_data["source"] = source_url
+            return json.dumps(result_data, indent=2)
+
+        # Default text format
         details_lines = []
         for field in show:
             label = field.get("label", field["column"])
@@ -114,7 +150,10 @@ def load_top_row_dataset(mcp, config, yaml_path):
 
     tool_fn.__signature__ = inspect.Signature(filter_params)
     tool_fn.__name__ = tool_name
-    tool_fn.__doc__ = build_filter_doc(tool_cfg, tool_desc)
+
+    doc = build_filter_doc(tool_cfg, tool_desc)
+    doc += "\n" + get_format_doc_line(ENGINE_NAME)
+    tool_fn.__doc__ = doc
     mcp.tool()(tool_fn)
 
     return 1
