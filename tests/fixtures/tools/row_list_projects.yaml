@@ -34,6 +34,13 @@ tool:
         from_only: "from {year_from}"
         to_only: "until {year_to}"
         same: "in {year_from}"
+  visualization:
+    group_by: YEAR
+    column: AMOUNT
+    aggregation: sum
+    type: bar
+    sort: label
+    label: "Amount (USD)"
   limit: 20
   sort:
     column: YEAR
