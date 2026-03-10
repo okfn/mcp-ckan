@@ -40,10 +40,22 @@ YAML config example:
 """
 
 import inspect
+import json
 
 import pandas as pd
 
 from mcp_server.engines.filters import build_filter_params, apply_filters, build_filter_doc
+from mcp_server.engines.formatters import (
+    get_output_format_param,
+    get_format_doc_line,
+    validate_format,
+    format_grouped_csv,
+    format_grouped_table,
+    format_chart_json,
+    format_image_chart,
+    format_single_value_json,
+    build_table_from_grouped,
+)
 
 
 AGGREGATIONS = {
@@ -51,6 +63,8 @@ AGGREGATIONS = {
     "avg": lambda s: s.mean(),
     "count": lambda s: len(s),
 }
+
+ENGINE_NAME = "aggregate"
 
 
 def load_aggregate_dataset(mcp, config, yaml_path):
@@ -66,13 +80,22 @@ def load_aggregate_dataset(mcp, config, yaml_path):
     aggregation = tool_cfg.get("aggregation", "sum")
     fmt = tool_cfg.get("format", "{result}")
     response_template = tool_cfg.get("response")
+    viz_cfg = tool_cfg.get("visualization")
 
     agg_fn = AGGREGATIONS.get(aggregation)
     if not agg_fn:
         raise ValueError(f"Unknown aggregation '{aggregation}'. Available: {list(AGGREGATIONS.keys())}")
+
     filter_params = build_filter_params(tool_cfg)
+    filter_params.append(get_output_format_param(ENGINE_NAME))
 
     def tool_fn(**kwargs):
+        output_format = kwargs.pop("output_format", "text")
+
+        error = validate_format(output_format, ENGINE_NAME)
+        if error:
+            return error
+
         read_kwargs = {"sep": separator} if separator else {}
         df = pd.read_csv(csv_url, **read_kwargs)
         try:
@@ -87,6 +110,55 @@ def load_aggregate_dataset(mcp, config, yaml_path):
         value = agg_fn(df[column].dropna())
         result = fmt.format(result=value)
 
+        # Compute grouped data if visualization is configured
+        grouped = None
+        stacked = None
+        if viz_cfg:
+            group_col = viz_cfg["group_by"]
+            stack_col = viz_cfg.get("stack_by")
+            if group_col in df.columns:
+                grouped = df.groupby(group_col)[column].agg(aggregation).sort_values(ascending=False)
+                # Stacked: pivot by stack_by column to get multi-dataset chart data
+                if stack_col and stack_col in df.columns:
+                    stacked = pd.pivot_table(
+                        df, index=group_col, columns=stack_col,
+                        values=column, aggfunc=aggregation, fill_value=0,
+                    ).sort_index()
+
+        # Handle non-text formats
+        if output_format != "text":
+            if output_format == "json":
+                extra = {}
+                if grouped is not None:
+                    extra["groups"] = [
+                        {"label": str(k), "value": round(v, 2)}
+                        for k, v in grouped.items()
+                    ]
+                return format_single_value_json(
+                    value, result, filter_label, source_url, extra
+                )
+
+            # Formats that require grouped data
+            if grouped is None:
+                return (
+                    f"Format '{output_format}' requires visualization config with group_by. "
+                    f"This tool only supports 'text' and 'json' without visualization config."
+                )
+
+            group_col = viz_cfg["group_by"]
+            value_label = viz_cfg.get("label", column)
+
+            if output_format == "csv":
+                return format_grouped_csv(grouped, group_col, value_label)
+            if output_format == "table":
+                return format_grouped_table(grouped, group_col, value_label)
+            if output_format.startswith("chart-"):
+                return format_chart_json(grouped, output_format, viz_cfg)
+            if output_format == "image-chart":
+                b64, mime = format_image_chart(grouped, viz_cfg)
+                return f"data:{mime};base64,{b64}"
+
+        # Default text format
         context = {
             "result": result,
             "filter_label": filter_label,
@@ -94,12 +166,47 @@ def load_aggregate_dataset(mcp, config, yaml_path):
         }
 
         if response_template:
-            return response_template.format(**context)
-        return f"Result {filter_label}: {result}"
+            text = response_template.format(**context)
+        else:
+            text = f"Result {filter_label}: {result}"
+
+        if grouped is not None:
+            group_col = viz_cfg["group_by"]
+            value_label = viz_cfg.get("label", column)
+            text += build_table_from_grouped(grouped, group_col, value_label, fmt)
+
+            if stacked is not None:
+                # Multi-dataset stacked chart
+                labels = [str(li) for li in stacked.index.tolist()]
+                datasets = []
+                for col_name in stacked.columns:
+                    datasets.append({
+                        "label": str(col_name),
+                        "data": [round(v, 2) for v in stacked[col_name].tolist()],
+                    })
+                chart = {
+                    "type": viz_cfg.get("type", "bar"),
+                    "stacked": True,
+                    "labels": labels,
+                    "datasets": datasets,
+                }
+            else:
+                chart = {
+                    "type": viz_cfg.get("type", "bar"),
+                    "labels": [str(li) for li in grouped.index.tolist()],
+                    "data": [round(v, 2) for v in grouped.values.tolist()],
+                    "label": viz_cfg.get("label", column),
+                }
+            text += "\n<!--chart:" + json.dumps(chart) + "-->"
+
+        return text
 
     tool_fn.__signature__ = inspect.Signature(filter_params)
     tool_fn.__name__ = tool_name
-    tool_fn.__doc__ = build_filter_doc(tool_cfg, tool_desc)
+
+    doc = build_filter_doc(tool_cfg, tool_desc)
+    doc += "\n" + get_format_doc_line(ENGINE_NAME)
+    tool_fn.__doc__ = doc
     mcp.tool()(tool_fn)
 
     return 1

@@ -14,4 +14,4 @@ deploy/keys/*
 deploy/tool_sources.yaml
 
 # Secret settings
-src/local_settings.py
+src/mcp_server/local_settings.py

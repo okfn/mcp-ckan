@@ -40,6 +40,16 @@ import inspect
 import pandas as pd
 
 from mcp_server.engines.filters import build_filter_params, apply_filters, build_filter_doc
+from mcp_server.engines.formatters import (
+    get_output_format_param,
+    get_format_doc_line,
+    validate_format,
+    format_values_csv,
+    format_values_json,
+    format_values_table,
+)
+
+ENGINE_NAME = "unique_values"
 
 
 def load_unique_values_dataset(mcp, config, yaml_path):
@@ -56,13 +66,30 @@ def load_unique_values_dataset(mcp, config, yaml_path):
     response_template = tool_cfg.get("response")
 
     filter_params = build_filter_params(tool_cfg)
+    filter_params.append(get_output_format_param(ENGINE_NAME))
 
     def tool_fn(**kwargs):
+        output_format = kwargs.pop("output_format", "text")
+
+        error = validate_format(output_format, ENGINE_NAME)
+        if error:
+            return error
+
         read_kwargs = {"sep": separator} if separator else {}
         df = pd.read_csv(csv_url, **read_kwargs)
         df, filter_label = apply_filters(df, tool_cfg, kwargs)
 
         values = sorted(df[column].dropna().unique())
+
+        # Handle non-text formats (no limit applied - return all values)
+        if output_format == "csv":
+            return format_values_csv(values, column)
+        if output_format == "table":
+            return format_values_table(values, column)
+        if output_format == "json":
+            return format_values_json(values, column)
+
+        # Default text format (with limit)
         list_values = values[:limit] + ["..."] if limit > 0 and len(values) > limit else values
         list_str = "\n".join(f"  - {v}" for v in list_values)
 
@@ -79,7 +106,10 @@ def load_unique_values_dataset(mcp, config, yaml_path):
 
     tool_fn.__signature__ = inspect.Signature(filter_params)
     tool_fn.__name__ = tool_name
-    tool_fn.__doc__ = build_filter_doc(tool_cfg, tool_desc)
+
+    doc = build_filter_doc(tool_cfg, tool_desc)
+    doc += "\n" + get_format_doc_line(ENGINE_NAME)
+    tool_fn.__doc__ = doc
     mcp.tool()(tool_fn)
 
     return 1

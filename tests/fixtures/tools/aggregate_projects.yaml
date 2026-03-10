@@ -27,6 +27,10 @@ tool:
         from_only: "from {year_from}"
         to_only: "until {year_to}"
         same: "in {year_from}"
+  visualization:
+    group_by: COUNTRY
+    type: bar
+    label: "Amount (USD)"
   response: |
     The total project amount {filter_label} is {result}.
     Source: {source}

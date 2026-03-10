@@ -41,7 +41,7 @@ YAML config example:
             from_only: "desde {year_from}"
             to_only: "hasta {year_to}"
             same: "en {year_from}"
-      limit: 20        # optional, default 20. Use 0 for no limit.
+      limit: 50        # optional, default 50. Use 0 for no limit.
       sort:
         column: ANIO_APROBACION
         order: asc     # asc (default) or desc
@@ -52,8 +52,20 @@ YAML config example:
 """
 
 import inspect
+import json
 import pandas as pd
 from mcp_server.engines.filters import build_filter_params, apply_filters, build_filter_doc
+from mcp_server.engines.formatters import (
+    get_output_format_param,
+    get_format_doc_line,
+    validate_format,
+    format_dataframe_csv,
+    format_dataframe_table,
+    format_dataframe_json,
+    build_table_from_dataframe,
+)
+
+ENGINE_NAME = "row_list"
 
 
 def load_row_list_dataset(mcp, config, yaml_path):
@@ -66,13 +78,21 @@ def load_row_list_dataset(mcp, config, yaml_path):
     tool_name = tool_cfg["name"]
     tool_desc = tool_cfg["description"]
     columns = tool_cfg.get("columns", [])
-    limit = tool_cfg.get("limit", 20)
+    limit = tool_cfg.get("limit", 50)
     sort_cfg = tool_cfg.get("sort")
     response_template = tool_cfg.get("response")
+    viz_cfg = tool_cfg.get("visualization")
 
     filter_params = build_filter_params(tool_cfg)
+    filter_params.append(get_output_format_param(ENGINE_NAME))
 
     def tool_fn(**kwargs):
+        output_format = kwargs.pop("output_format", "text")
+
+        error = validate_format(output_format, ENGINE_NAME)
+        if error:
+            return error
+
         read_kwargs = {"sep": separator} if separator else {}
         df = pd.read_csv(csv_url, **read_kwargs)
         try:
@@ -84,7 +104,6 @@ def load_row_list_dataset(mcp, config, yaml_path):
             label = f" {filter_label}" if filter_label else ""
             return f"No se encontraron resultados{label}."
 
-        rows_lines = []
         total = len(df)
         if sort_cfg:
             df = df.sort_values(
@@ -92,6 +111,18 @@ def load_row_list_dataset(mcp, config, yaml_path):
                 ascending=sort_cfg.get("order", "asc") == "asc",
             )
         display_df = df if not limit else df.head(limit)
+
+        # Handle non-text formats (no limit - return all data)
+        if output_format != "text":
+            if output_format == "csv":
+                return format_dataframe_csv(df, columns)
+            if output_format == "table":
+                return format_dataframe_table(df, columns)
+            if output_format == "json":
+                return format_dataframe_json(df, columns)
+
+        # Default text format
+        rows_lines = []
         for _, row in display_df.iterrows():
             parts = []
             for field in columns:
@@ -114,12 +145,63 @@ def load_row_list_dataset(mcp, config, yaml_path):
         }
 
         if response_template:
-            return response_template.format(**context)
-        return f"{total} resultados {filter_label}:\n{list_str}"
+            text = response_template.format(**context)
+        else:
+            text = f"{total} resultados {filter_label}:\n{list_str}"
+
+        # Embed table marker for webchat rendering (uses all data, not limited)
+        if columns:
+            text += build_table_from_dataframe(df, columns)
+
+        # Embed chart marker if visualization is configured
+        if viz_cfg:
+            group_col = viz_cfg["group_by"]
+            value_col = viz_cfg["column"]
+            agg = viz_cfg.get("aggregation", "sum")
+            stack_col = viz_cfg.get("stack_by")
+            if group_col in df.columns and value_col in df.columns:
+                grouped = df.groupby(group_col)[value_col].agg(agg)
+                if viz_cfg.get("sort", "label") == "label":
+                    grouped = grouped.sort_index()
+                else:
+                    grouped = grouped.sort_values(ascending=False)
+
+                if stack_col and stack_col in df.columns:
+                    # Multi-dataset stacked chart
+                    stacked = pd.pivot_table(
+                        df, index=group_col, columns=stack_col,
+                        values=value_col, aggfunc=agg, fill_value=0,
+                    ).sort_index()
+                    labels = [str(li) for li in stacked.index.tolist()]
+                    datasets = []
+                    for col_name in stacked.columns:
+                        datasets.append({
+                            "label": str(col_name),
+                            "data": [round(v, 2) for v in stacked[col_name].tolist()],
+                        })
+                    chart = {
+                        "type": viz_cfg.get("type", "bar"),
+                        "stacked": True,
+                        "labels": labels,
+                        "datasets": datasets,
+                    }
+                else:
+                    chart = {
+                        "type": viz_cfg.get("type", "bar"),
+                        "labels": [str(li) for li in grouped.index.tolist()],
+                        "data": [round(v, 2) for v in grouped.values.tolist()],
+                        "label": viz_cfg.get("label", value_col),
+                    }
+                text += "\n<!--chart:" + json.dumps(chart) + "-->"
+
+        return text
 
     tool_fn.__signature__ = inspect.Signature(filter_params)
     tool_fn.__name__ = tool_name
-    tool_fn.__doc__ = build_filter_doc(tool_cfg, tool_desc)
+
+    doc = build_filter_doc(tool_cfg, tool_desc)
+    doc += "\n" + get_format_doc_line(ENGINE_NAME)
+    tool_fn.__doc__ = doc
     mcp.tool()(tool_fn)
 
     return 1
