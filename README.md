@@ -60,10 +60,10 @@ pytest
 
 This (and other settings) can be configured via the `settings.py` file (or environment variables if defined).
 
-Set `MCP_TRANSPORT=stdio` (default) for local development and Claude Desktop integration
-Set `MCP_TRANSPORT=http` for remote infrastructure deployment
-Set `MCP_FETCH_REMOTE` True/False to control whether to fetch remote tools on startup (default: True).
-Set `MCP_HOST` and `MCP_PORT` to control the server's host and port (default: 127.0.0.1:8063).
+- Set `MCP_TRANSPORT=stdio` (default) for local development and Claude Desktop integration
+- Set `MCP_TRANSPORT=http` for remote infrastructure deployment
+- Set `MCP_FETCH_REMOTE` True/False to control whether to fetch remote tools on startup (default: True).
+- Set `MCP_HOST` and `MCP_PORT` to control the server's host and port (default: 127.0.0.1:8063).
 
 ## Fetching Remote Tools
 
