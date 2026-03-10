@@ -1,7 +1,10 @@
-# Simple MCP server test
+# Simple MCP Server to answer questions with data
 
-MCP Server with dual-mode transport support.
-Supports both stdio (local) and HTTP (infrastructure) transports.
+**Note:** This project is currently in early research phase. Breaking changes are expected.
+
+MCP Server that register tools to consistently and accurately answer user questions using underlying data.
+
+The goal of this project is to research and find ways to integrate AI and LLMs to Open Data portals in a trustworthy manner. Can AI be used as a tool to answer questions using open data?
 
 ## Running locally
 
