@@ -70,6 +70,7 @@ def _load_remote_tools(mcp):
         This way, we can register mcp tools defined in remote repositories
         without having to deploy new code to the MCP server.
     """
+    log.info("Loading remote tools from manifest...")
     project_root = Path(__file__).resolve().parent.parent.parent.parent
     manifest = project_root / "deploy/tool_sources.yaml"
     remote_dir = project_root / "remote_tools"
@@ -137,8 +138,10 @@ def _load_yaml_datasets(mcp, directory, label):
     Returns:
         int: Number of tools loaded
     """
+    log.info(f"Scanning for YAML datasets in {directory}...")
     yaml_files = sorted(directory.glob("*.yaml"))
     if not yaml_files:
+        log.info(f"No YAML datasets found in {directory}.")
         return 0
 
     loaded = 0
