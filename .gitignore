@@ -1,0 +1,17 @@
+.venv
+.env
+*.pyc
+__pycache__/
+remote_tools/
+remotes/
+# tool_sources.yaml
+
+# Ignore all keys except the README.md file
+deploy/keys/*
+!deploy/keys/README.md
+
+# Ignore actual tools from the server
+deploy/tool_sources.yaml
+
+# Secret settings
+src/local_settings.py

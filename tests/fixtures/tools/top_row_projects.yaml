@@ -1,0 +1,32 @@
+engine: top_row
+
+dataset:
+  name: projects-top
+  description: "Largest project"
+  source:
+    csv: tests/fixtures/data/projects.csv
+    url: https://example.org/projects
+
+tool:
+  name: top_project
+  description: "Get the project with the largest amount"
+  column: AMOUNT
+  order: max
+  format: "${result:,.2f}"
+  show:
+    - column: COUNTRY
+      label: "Country"
+    - column: YEAR
+      label: "Year"
+    - column: AMOUNT
+      label: "Amount"
+      format: "${result:,.2f}"
+  filters:
+    - column: COUNTRY
+      param: country
+      description: "Country name, e.g. Argentina, Brazil, Chile"
+      label: "for {value}"
+  response: |
+    The largest project {filter_label} is {result} by {row[COUNTRY]} in {row[YEAR]}.
+    {details}
+    Source: {source}

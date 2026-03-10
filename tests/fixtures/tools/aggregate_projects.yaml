@@ -1,0 +1,32 @@
+engine: aggregate
+
+dataset:
+  name: projects-total
+  description: "Total project amounts"
+  source:
+    csv: tests/fixtures/data/projects.csv
+    url: https://example.org/projects
+
+tool:
+  name: total_projects
+  description: "Get the total amount of all projects in USD"
+  column: AMOUNT
+  aggregation: sum
+  format: "${result:,.2f}"
+  filters:
+    - column: COUNTRY
+      param: country
+      description: "Country name, e.g. Argentina, Brazil, Chile"
+      label: "for {value}"
+    - column: YEAR
+      param: year
+      type: int_range
+      description: "Year"
+      label:
+        both: "between {year_from} and {year_to}"
+        from_only: "from {year_from}"
+        to_only: "until {year_to}"
+        same: "in {year_from}"
+  response: |
+    The total project amount {filter_label} is {result}.
+    Source: {source}

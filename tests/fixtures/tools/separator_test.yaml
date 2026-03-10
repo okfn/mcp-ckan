@@ -1,0 +1,18 @@
+engine: unique_values
+
+dataset:
+  name: projects-countries-semicolon
+  description: "Countries with projects (semicolon CSV)"
+  source:
+    csv: tests/fixtures/data/projects_semicolon.csv
+    url: https://example.org/projects
+    separator: ";"
+
+tool:
+  name: project_countries_semicolon
+  description: "Get the list of countries from semicolon-separated CSV"
+  column: COUNTRY
+  response: |
+    There are {count} countries {filter_label}:
+    {list}
+    Source: {source}
