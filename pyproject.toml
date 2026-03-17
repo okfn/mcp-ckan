@@ -16,6 +16,7 @@ mcp-server = "mcp_server.server:main"
 
 [dependency-groups]
 dev = [
+  "ipdb>=0.13.13",
   "pytest",
 ]
 
