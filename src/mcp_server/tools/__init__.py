@@ -9,11 +9,9 @@ definitions (routed to the engine system).
 
 import importlib
 import logging
-import yaml
 from pathlib import Path
 from mcp_server.engines import load_dataset
-from mcp_server.lib.remote_tools import fetch_remote_tools
-from mcp_server.settings import MCP_FETCH_REMOTE, MCP_TOOLS_DIR
+from mcp_server.settings import MCP_TOOLS_DIR
 
 
 log = logging.getLogger(__name__)
@@ -65,67 +63,6 @@ def _load_local_tools(mcp):
     return loaded
 
 
-def _load_remote_tools(mcp):
-    """ Load tool modules from remote repos declared in tool_sources.yaml.
-        This way, we can register mcp tools defined in remote repositories
-        without having to deploy new code to the MCP server.
-    """
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
-    manifest = project_root / "deploy/tool_sources.yaml"
-    remote_dir = project_root / "remote_tools"
-
-    if not manifest.exists():
-        log.warning(f"Remote tool manifest not found: {manifest}. Skipping remote tools.")
-        return 0
-
-    with open(manifest) as f:
-        config = yaml.safe_load(f)
-
-    sources = config.get("sources") or []
-    if not sources:
-        log.warning(f"No remote tool sources defined in manifest: {manifest}")
-        return 0
-
-    loaded = 0
-    for source in sources:
-        log.info(f" - Loading remote tools from source: {source.get('name', 'unknown')}")
-        name = source["name"]
-        path = source.get("path", ".")
-        tools_path = remote_dir / name / path
-
-        if not tools_path.is_dir():
-            log.warning(f"Remote tool directory not found for source {name}: {tools_path} (run fetch_remote_tools.py first)")
-            continue
-
-        # Load Python tool modules
-        py_files = [
-            f for f in tools_path.glob("*.py")
-            if not f.stem.startswith("_")
-        ]
-
-        for py_file in py_files:
-            module_name = f"remote_tools.{name}.{py_file.stem}"
-            log.info(f"Attempting to load remote tool module: {module_name} from {py_file}")
-            try:
-                spec = importlib.util.spec_from_file_location(module_name, py_file)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-
-                if hasattr(module, "register_tools"):
-                    module.register_tools(mcp)
-                    loaded += 1
-                    log.info(f"  [remote:{name}] {py_file.stem}")
-                else:
-                    log.warning(f"  [remote:{name}] skipping {py_file.stem}: no register_tools()")
-            except Exception as e:
-                log.error(f"  [remote:{name}] error loading {py_file.stem}: {e}")
-
-        # Load YAML dataset definitions
-        loaded += _load_yaml_datasets(mcp, tools_path, f"remote:{name}")
-
-    return loaded
-
-
 def _load_yaml_datasets(mcp, directory, label):
     """Scan a directory for .yaml dataset files and load via engine system.
 
@@ -152,42 +89,3 @@ def _load_yaml_datasets(mcp, directory, label):
 
     return loaded
 
-
-def load_tools(mcp):
-    """
-    Dynamically load all tools from the tools directory
-    and from remote repositories declared in tool_sources.yaml.
-
-    Supports both Python modules (with register_tools function)
-    and SQL or YAML dataset definitions (routed to the engine system).
-
-    Args:
-        mcp: FastMCP server instance
-
-    Each tool module should have a register_tools(mcp) function that
-    registers its tools with the MCP server using decorators.
-    """
-    log.info("\nLocal tools:")
-    local_count = _load_local_tools(mcp)
-
-    # When MCP_TOOLS_DIR is set, skip remote tools entirely
-    if MCP_TOOLS_DIR:
-        log.info("\nSkipping remote tools (MCP_TOOLS_DIR is set)")
-        log.info(f"\nTotal tools loaded: {local_count}")
-        return local_count
-
-    # Fetch remote tool repositories before loading (default: enabled)
-    if MCP_FETCH_REMOTE:
-        log.info("\nFetching remote tool repositories...")
-        errors = fetch_remote_tools()
-        if errors:
-            log.warning(f"Remote fetch completed with {errors} error(s)")
-    else:
-        log.info("\nSkipping remote tool fetch (MCP_FETCH_REMOTE=false)")
-
-    log.info("\nRemote tools:")
-    remote_count = _load_remote_tools(mcp)
-
-    total = local_count + remote_count
-    log.info(f"\nTotal tools loaded: {total} ({local_count} local, {remote_count} remote)")
-    return total
