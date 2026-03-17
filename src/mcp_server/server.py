@@ -11,7 +11,7 @@ import pkgutil
 from mcp.server.fastmcp import FastMCP
 
 from mcp_server.engines import load_dataset
-from mcp_server.settings import MCP_FETCH_REMOTE, MCP_TRANSPORT, MCP_HOST, MCP_PORT
+from mcp_server.settings import MCP_TRANSPORT, MCP_HOST, MCP_PORT
 
 log = logging.getLogger(__name__)
 
@@ -54,8 +54,7 @@ mcp = create_mcp_server(MCP_HOST, MCP_PORT)
 def main():
     print("=" * 60)
     print(
-        f"Settings: host={MCP_HOST}, port={MCP_PORT} "
-        f"transport={MCP_TRANSPORT}, fetch_remote={MCP_FETCH_REMOTE}"
+        f"Settings: host={MCP_HOST}, port={MCP_PORT} transport={MCP_TRANSPORT}"
     )
     print("=" * 60)
 
