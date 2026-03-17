@@ -5,6 +5,7 @@ This server automatically discovers and loads tools from installed python packag
 Each package should have an `mcp_ckan` entrypoint with a register_tools(mcp) function.
 """
 import importlib
+import logging
 import pkgutil
 
 from mcp.server.fastmcp import FastMCP
@@ -12,11 +13,13 @@ from mcp.server.fastmcp import FastMCP
 from mcp_server.engines import load_dataset
 from mcp_server.settings import MCP_FETCH_REMOTE, MCP_TRANSPORT, MCP_HOST, MCP_PORT
 
+log = logging.getLogger(__name__)
+
 
 def load_python_plugins(mcp):
     """Load Python tools defined in plugins."""
     for entry_point in importlib.metadata.entry_points(group='mcp_ckan'):
-        print(f"Loading plugin: {entry_point.module}")
+        log.info(f"Loading plugin: {entry_point.module}")
         register_tools = entry_point.load()
         register_tools(mcp)
 
@@ -33,7 +36,7 @@ def load_yaml_plugins(mcp):
     for plugin in discovered_plugins:
         resources = importlib.resources.files(plugin)
         for resource in resources.rglob('*.yaml'):
-            print(f"Loading {resource}")
+            log.info(f"Loading {resource}")
             load_dataset(mcp, resource)
 
 
