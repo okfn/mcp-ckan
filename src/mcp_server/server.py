@@ -18,10 +18,11 @@ log = logging.getLogger(__name__)
 
 def load_python_plugins(mcp):
     """Load Python tools defined in plugins."""
-    for entry_point in importlib.metadata.entry_points(group='mcp_ckan'):
-        log.info(f"Loading plugin: {entry_point.module}")
-        register_tools = entry_point.load()
-        register_tools(mcp)
+    for entry_point in importlib.metadata.entry_points():
+        if entry_point.group == "mcp_ckan":
+            log.info(f"Loading plugin: {entry_point.module}")
+            register_tools = entry_point.load()
+            register_tools(mcp)
 
 
 def load_yaml_plugins(mcp):
