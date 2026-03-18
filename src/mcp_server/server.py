@@ -53,11 +53,9 @@ def create_mcp_server(host, port):
 mcp = create_mcp_server(MCP_HOST, MCP_PORT)
 
 def main():
-    print("=" * 60)
-    print(
-        f"Settings: host={MCP_HOST}, port={MCP_PORT} transport={MCP_TRANSPORT}"
-    )
-    print("=" * 60)
+    log.info("=" * 60)
+    log.info(f"Settings: host={MCP_HOST}, port={MCP_PORT} transport={MCP_TRANSPORT}")
+    log.info("=" * 60)
 
     if MCP_TRANSPORT == "http":
         # HTTP mode for infrastructure deployment
@@ -65,8 +63,3 @@ def main():
     else:
         # stdio mode (default) for local development
         mcp.run(transport="stdio")
-
-if __name__ == "__main__":
-    # Required for tests.
-    # TODO: Refactor tests properly.
-    main()
