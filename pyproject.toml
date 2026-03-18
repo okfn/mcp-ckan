@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-server = "mcp_server.server:main"
+mcp-ckan = "mcp_server.server:main"
 
 [dependency-groups]
 dev = [

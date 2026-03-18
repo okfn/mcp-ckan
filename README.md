@@ -19,7 +19,7 @@ uv run pytest
 
 Run the server:
 ```bash
-uv run mcp-server
+uv run mcp-ckan
 ```
 
 ## Fetching Remote Tools
@@ -94,8 +94,6 @@ Create the file `.vscode/mcp.json`:
 This tool allows you to test tools locally without any AI model.
 
 ```bash
-npx @modelcontextprotocol/inspector uv run mcp-server
-# or
-npx @modelcontextprotocol/inspector .venv/bin/python src/mcp_server/server.py
+npx @modelcontextprotocol/inspector uv run mcp-ckan
 ```
 
