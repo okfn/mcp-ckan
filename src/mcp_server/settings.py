@@ -9,7 +9,7 @@ MCP_PORT = 8063
 
 # Optionally override settings with local_settings.py (not committed to git)
 try:
-    from local_settings import *  # noqa: F401 F403
+    from mcp_server.local_settings import *  # noqa: F401 F403
     print(" - Loaded settings from local_settings.py")
 except ImportError:
     pass
