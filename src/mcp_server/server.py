@@ -20,7 +20,7 @@ def load_python_plugins(mcp):
     """Load Python tools defined in plugins."""
     for entry_point in importlib.metadata.entry_points():
         if entry_point.group == "mcp_ckan":
-            log.info(f"Loading plugin: {entry_point.module}")
+            log.info(f"[{entry_point.module}] - python tools.")
             register_tools = entry_point.load()
             register_tools(mcp)
 
@@ -37,7 +37,7 @@ def load_yaml_plugins(mcp):
     for plugin in discovered_plugins:
         resources = importlib.resources.files(plugin)
         for resource in resources.rglob('*.yaml'):
-            log.info(f"Loading {resource}")
+            log.info(f"[{plugin}] - {resource.name}")
             load_dataset(mcp, resource)
 
 
