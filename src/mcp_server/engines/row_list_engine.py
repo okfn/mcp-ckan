@@ -72,8 +72,12 @@ def load_row_list_dataset(mcp, config, yaml_path):
 
     filter_params = build_filter_params(tool_cfg)
 
+    encoding = source.get("encoding")
+
     def tool_fn(**kwargs):
         read_kwargs = {"sep": separator} if separator else {}
+        if encoding:
+            read_kwargs["encoding"] = encoding
         df = pd.read_csv(csv_url, **read_kwargs)
         try:
             df, filter_label = apply_filters(df, tool_cfg, kwargs)
