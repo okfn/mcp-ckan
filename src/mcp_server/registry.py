@@ -1,8 +1,11 @@
 import inspect
+import logging
 
 from mcp.server.fastmcp import FastMCP
 
 from mcp_server import ToolOutput
+
+log = logging.getLogger(__name__)
 
 
 class ToolRegistry:
@@ -10,8 +13,11 @@ class ToolRegistry:
 
     Wraps a FastMCP instance and intercepts every ``tool()`` call to verify that
     the function declares ``-> ToolOutput`` in its return annotation.  Validation
-    happens at registration time (server startup), not at call time, so invalid
-    tools fail fast before any client request is served.
+    happens at registration time (server startup), not at call time.
+
+    Tools that do not declare the correct return annotation are **not registered**
+    and a warning is logged instead.  This allows the server to start and serve
+    only its valid tools, rather than crashing on the first bad plugin.
 
     Plugins and engines must use this registry instead of calling ``mcp.tool()``
     directly.  The ``tool()`` method returns the same decorator API as FastMCP
@@ -26,8 +32,8 @@ class ToolRegistry:
         """Decorator that registers a function with FastMCP after validating its
         return type annotation.
 
-        Raises:
-            TypeError: If the function's return annotation is not ``ToolOutput``.
+        If the return annotation is not ``ToolOutput``, logs a warning and returns
+        the original function **without** registering it with FastMCP.
         """
         def decorator(fn):
             sig = inspect.signature(fn)
@@ -38,8 +44,11 @@ class ToolRegistry:
                     if return_annotation is inspect.Parameter.empty
                     else return_annotation.__name__
                 )
-                raise TypeError(
-                    f"{fn.__name__}: return annotation must be ToolOutput, got {got}"
+                log.warning(
+                    "Skipping tool '%s': return annotation must be ToolOutput, got %s",
+                    fn.__name__,
+                    got,
                 )
+                return fn
             return self._mcp.tool()(fn)
         return decorator

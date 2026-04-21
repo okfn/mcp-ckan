@@ -4,10 +4,9 @@ from pydantic import BaseModel, Field
 class ToolOutput(BaseModel):
     """Structured output for all MCP tools in this server.
 
-    Every tool registered through the ToolRegistry must return an instance of this
-    class. The registry enforces this at startup by inspecting the function's return
-    type annotation — tools without ``-> ToolOutput`` will be rejected with a
-    ``TypeError`` before the server starts.
+    Every tool registered through the ToolRegistry must declare ``-> ToolOutput``
+    in its return annotation.  The registry checks this at startup; tools that
+    don't comply are skipped with a warning rather than causing a crash.
 
     The serialized dict (via ``model_dump()``) is returned to the MCP client,
     giving consumers direct access to all fields regardless of which ones a
