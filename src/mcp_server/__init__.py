@@ -2,7 +2,17 @@ from pydantic import BaseModel, Field
 
 
 class ToolOutput(BaseModel):
-    """Class for MCP Tools structured output."""
+    """Structured output for all MCP tools in this server.
+
+    Every tool registered through the ToolRegistry must return an instance of this
+    class. The registry enforces this at startup by inspecting the function's return
+    type annotation — tools without ``-> ToolOutput`` will be rejected with a
+    ``TypeError`` before the server starts.
+
+    The serialized dict (via ``model_dump()``) is returned to the MCP client,
+    giving consumers direct access to all fields regardless of which ones a
+    particular tool populates.
+    """
     source: str = Field(
         description="Complete URL pointing to the original source of the data."
     )
