@@ -47,14 +47,21 @@ The Plugin needs to:
 uv init --package mcp-ckan-exampleplugin
 ```
 
-2. Define a `register_tools(mcp)` function that register tools in a MCP Server:
+2. Define a `register_tools(mcp)` function that register tools in a MCP Server registry:
 
 ```python
-def register_tools(mcp):
-    @mcp.tool()
-    def greetings_from_examplepythontools():
-        return "Hello from mcp_ckan_examplepythontools!"
+from mcp_server import ToolOutput
+
+def register_tools(registry):
+    @registry.tool()
+    def greetings_from_examplepythontools() -> ToolOutput:
+        return ToolOutput(
+            source="https://example.org",
+            content="Hello from mcp_ckan_examplepythontools!"
+        )
 ```
+
+**Note:** This MCP server enforces [structured output](https://github.com/modelcontextprotocol/python-sdk?tab=readme-ov-file#structured-output) and validates that the type returned is `ToolOutput`. If the function does not have the type annotation `-> ToolOutput` it will not be registered.
 
 3. Register a new `mcp_ckan` entrypoint in the `pyproject.toml` file that calls the `register_tools` function.
 
@@ -62,6 +69,15 @@ def register_tools(mcp):
 [project.entry-points."mcp_ckan"]
 mcp-ckan-examplepythontools = "mcp_ckan_examplepythontools:register_tools"
 ```
+
+## ToolOutput
+
+This MCP Server has a light-validation of the return type of the tools it registers. The goal of `ToolOutput` is to have a standarized communication between plugins and server.
+
+Because Python is a dynamically typed language we can only validate (at startup time) function signatures. This will not ensure that the actual value returned at Runtime will
+be a ToolOutput serialized object but it is a good-enough approach for early implementations.
+
+You can check the [class documentation](./src/mcp_server/__init__.py) for more information.
 
 ## Server Settings
 
