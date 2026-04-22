@@ -6,7 +6,7 @@ class ToolOutput(BaseModel):
 
     Every tool registered through the ToolRegistry must declare ``-> ToolOutput``
     in its return annotation.  The registry checks this at startup; tools that
-    don't comply are skipped with a warning rather than causing a crash.
+    don't comply are skipped with a warning.
 
     The serialized dict (via ``model_dump()``) is returned to the MCP client,
     giving consumers direct access to all fields regardless of which ones a

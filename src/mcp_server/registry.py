@@ -13,16 +13,15 @@ class ToolRegistry:
 
     Wraps a FastMCP instance and intercepts every ``tool()`` call to verify that
     the function declares ``-> ToolOutput`` in its return annotation.  Validation
-    happens at registration time (server startup), not at call time.
+    happens at registration time (server startup).
 
     Tools that do not declare the correct return annotation are **not registered**
     and a warning is logged instead.  This allows the server to start and serve
-    only its valid tools, rather than crashing on the first bad plugin.
+    only its valid tools.
 
     Plugins and engines must use this registry instead of calling ``mcp.tool()``
-    directly.  The ``tool()`` method returns the same decorator API as FastMCP
-    so existing patterns (``@registry.tool()`` and ``registry.tool()(fn)``) work
-    unchanged.
+    directly.  The ``tool()`` method returns the same decorator API so existing
+    patterns (``@registry.tool()`` and ``registry.tool()(fn)``) work unchanged.
     """
 
     def __init__(self, mcp: FastMCP):
