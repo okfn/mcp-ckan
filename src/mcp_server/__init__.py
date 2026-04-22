@@ -19,7 +19,7 @@ class ToolOutput(BaseModel):
         default="",
         description="Direct response for the LLM to consume. Supports plain text, Markdown, or other text-based formats."
     )
-    structured_content: dict = Field(
+    structuredContent: dict = Field(
         default={},
         description="JSON-serializable dictionary with arbitrary keys. Provides structured data for the LLM when plain text is insufficient."
     )
