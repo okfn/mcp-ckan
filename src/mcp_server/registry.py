@@ -3,7 +3,7 @@ import logging
 
 from mcp.server.fastmcp import FastMCP
 
-from mcp_server import ToolOutput
+from mcp_server import DataToolOutput
 
 log = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ class ToolRegistry:
     """Controls tool registration and enforces the ToolOutput contract.
 
     Wraps a FastMCP instance and intercepts every ``tool()`` call to verify that
-    the function declares ``-> ToolOutput`` in its return annotation.  Validation
+    the function declares ``-> DataToolOutput`` in its return annotation.  Validation
     happens at registration time (server startup).
 
     Tools that do not declare the correct return annotation are **not registered**
@@ -37,14 +37,14 @@ class ToolRegistry:
         def decorator(fn):
             sig = inspect.signature(fn)
             return_annotation = sig.return_annotation
-            if return_annotation is inspect.Parameter.empty or return_annotation is not ToolOutput:
+            if return_annotation is inspect.Parameter.empty or return_annotation is not DataToolOutput:
                 got = (
                     "none"
                     if return_annotation is inspect.Parameter.empty
                     else return_annotation.__name__
                 )
                 log.warning(
-                    "Skipping tool '%s': return annotation must be ToolOutput, got %s",
+                    "Skipping tool '%s': return annotation must be DataToolOutput, got %s",
                     fn.__name__,
                     got,
                 )
