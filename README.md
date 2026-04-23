@@ -113,7 +113,7 @@ def register_tools(registry):
 4. Register a new `mcp_ckan` entrypoint in the `pyproject.toml` file that calls the newly created `register_tools` function.
 
 ```toml
-[project.entry-points."mcp_ckan"]
+[project.entry-points.mcp_ckan]
 mcp-ckan-examplepythontools = "mcp_ckan_examplepythontools:register_tools"
 ```
 
@@ -126,6 +126,8 @@ MCP_TRANSPORT=http uv run mcp-ckan
 ```
 npx @modelcontextprotocol/inspector
 ```
+
+7. Navigate to the MCP Inspector webpage and connect to `http://127.0.0.1:8063` (no `/mcp`) using `Streamable HTTP` transport type
 
 ## DataToolOutput
 
@@ -178,13 +180,15 @@ The `structuredContent` dict must conform to the following schema:
 from mcp.types import CallToolResult, TextContent
 from mcp_server import DataToolOutput
 
-@registry.tool()
 def get_gdp() -> DataToolOutput:
     """Return the latest GDP value."""
     return CallToolResult(
         content=[TextContent(type="text", text="The GDP for 2024 is $1.2 trillion.")],
         structuredContent={"sources": ["https://example.org/gdp-data"]},
     )
+
+def register_tools(registry):
+    registry.tool()(get_gdp)
 ```
 
 **Table data — returning tabular results:**
@@ -193,22 +197,23 @@ def get_gdp() -> DataToolOutput:
 from mcp.types import CallToolResult, TextContent
 from mcp_server import DataToolOutput
 
-@registry.tool()
-def list_cities() -> DataToolOutput:
-    """Return the top 3 cities by population."""
-    return CallToolResult(
-        content=[TextContent(type="text", text="Found 3 cities sorted by population.")],
-        structuredContent={
-            "sources": ["https://example.org/cities-data"],
-            "table": [
-                ["City", "Population"],
-                ["Tokyo", "37400068"],
-                ["Delhi", "30290936"],
-                ["Shanghai", "27058479"],
-            ],
-        },
-    )
+def register_tools(registry):
+    @registry.tool()
+    def list_cities() -> DataToolOutput:
+        """Return the top 3 cities by population."""
+        return CallToolResult(
+            content=[TextContent(type="text", text="Found 3 cities sorted by population.")],
+            structuredContent={
+                "sources": ["https://example.org/cities-data"],
+                "table": [
+                    ["City", "Population"],
+                    ["Tokyo", "37400068"],
+                    ["Delhi", "30290936"],
+                    ["Shanghai", "27058479"],
+                ],
+            },
+        )
 ```
 
-You can check the [source code](./src/mcp_server/__init__.py) for more information.
+You can check the [source code](./src/mcp_server/__init__.py) for more information on `DataToolOutput`.
 
