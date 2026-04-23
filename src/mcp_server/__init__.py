@@ -11,7 +11,7 @@ class ValidationModel(BaseModel):
     don't comply are skipped with a warning.
 
     The serialized dict (via ``model_dump()``) is returned to the MCP client
-    in the `structuredOutput` field of the response.
+    in the `structuredContent` field of the response.
     """
     sources: list = Field(
         description="Information pointing to the original source of the data."
