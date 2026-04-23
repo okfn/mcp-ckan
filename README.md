@@ -129,11 +129,86 @@ npx @modelcontextprotocol/inspector
 
 ## DataToolOutput
 
-This MCP Server has a `ValidationModel` for the return type of the tools it will register. The goal of the `ValidationModel` and the `DataToolOutput` annotation
-is to have a standarized communication between plugins and server. The schema is still on development so changes are expected.
+This MCP Server uses a `DataToolOutput` annotation and a `ValidationModel` to enforce a standardized contract between plugins and the server. The schema is still in development so changes are expected.
 
-Because Python is a dynamically typed language we can only validate function signatures at startup time. This means the server
-will never know the actual value returned at Runtime. However we consider enforcing annotations a good-enough approach for early implementations.
+### How it works
 
-You can check the [class documentation](./src/mcp_server/__init__.py) for more information.
+`DataToolOutput` is defined as:
+
+```python
+DataToolOutput = Annotated[CallToolResult, ValidationModel]
+```
+
+This combines the MCP SDK's `CallToolResult` return type with a `ValidationModel` (a Pydantic model) using Python's `Annotated` generic. The MCP SDK uses this pattern to enable [structured output](https://github.com/modelcontextprotocol/python-sdk?tab=readme-ov-file#structured-output) — validating that the `structuredContent` field conforms to the `ValidationModel` schema.
+
+The `ToolRegistry` enforces this annotation at startup time by inspecting each tool function's return type. Tools that do not declare `-> DataToolOutput` are **skipped** with a warning and will not be registered. Because Python is dynamically typed, the server cannot validate actual runtime return values, but enforcing annotations is a good-enough approach for early implementations.
+
+### CallToolResult: `content` and `structuredContent`
+
+Every tool must return a `CallToolResult` with two fields:
+
+- **`content`** (`list[TextContent | ImageContent | ...]`): The human-readable output that the LLM uses to understand and respond to the user. This is always required.
+- **`structuredContent`** (`dict conforming to ValidationModel`): A machine-parseable JSON payload that the chat interface uses to render structured elements like tables, charts, and source links. This is optional but recommended.
+
+Both fields serve different consumers: `content` is for the **LLM**, while `structuredContent` is for the **UI**.
+
+Providing both gives flexibility by ensuring the AI can answer the question and the developers can render it in a structured way.
+
+For more information on `content`/`structuredContent`:
+
+- [How Langchain uses this fields](https://forum.langchain.com/t/why-can-the-model-see-the-structured-content-returned-by-the-mcp-tool/3076).
+- [User Guidance community discussion](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1624)
+
+### ValidationModel fields
+
+The `structuredContent` dict must conform to the following schema:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `sources` | `list` | *required* | Information pointing to the original source of the data. |
+| `table` | `list` | `[]` | Two-dimensional list (list of rows) representing tabular data. Each row should be a list of cell values. |
+| `charts` | `list` | `[]` | *(in development)* Dictionaries containing data and configuration for rendering Chart.js charts. |
+| `force` | `str` | `""` | Plain text message that bypasses LLM processing and is printed exactly as provided. |
+
+### Examples
+
+**Minimal — text with a data source:**
+
+```python
+from mcp.types import CallToolResult, TextContent
+from mcp_server import DataToolOutput
+
+@registry.tool()
+def get_gdp() -> DataToolOutput:
+    """Return the latest GDP value."""
+    return CallToolResult(
+        content=[TextContent(type="text", text="The GDP for 2024 is $1.2 trillion.")],
+        structuredContent={"sources": ["https://example.org/gdp-data"]},
+    )
+```
+
+**Table data — returning tabular results:**
+
+```python
+from mcp.types import CallToolResult, TextContent
+from mcp_server import DataToolOutput
+
+@registry.tool()
+def list_cities() -> DataToolOutput:
+    """Return the top 3 cities by population."""
+    return CallToolResult(
+        content=[TextContent(type="text", text="Found 3 cities sorted by population.")],
+        structuredContent={
+            "sources": ["https://example.org/cities-data"],
+            "table": [
+                ["City", "Population"],
+                ["Tokyo", "37400068"],
+                ["Delhi", "30290936"],
+                ["Shanghai", "27058479"],
+            ],
+        },
+    )
+```
+
+You can check the [source code](./src/mcp_server/__init__.py) for more information.
 
