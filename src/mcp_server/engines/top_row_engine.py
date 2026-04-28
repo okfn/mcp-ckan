@@ -54,6 +54,7 @@ import inspect
 
 import pandas as pd
 
+from mcp_server import DataToolOutput
 from mcp_server.engines.filters import build_filter_params, apply_filters, build_filter_doc
 
 
@@ -116,7 +117,8 @@ def load_top_row_dataset(mcp, config, yaml_path):
             return response_template.format(**context)
         return f"Top result {filter_label}: {result}\n{details}"
 
-    tool_fn.__signature__ = inspect.Signature(filter_params)
+    tool_fn.__signature__ = inspect.Signature(filter_params, return_annotation=DataToolOutput)
+    tool_fn.__annotations__["return"] = DataToolOutput
     tool_fn.__name__ = tool_name
     tool_fn.__doc__ = build_filter_doc(tool_cfg, tool_desc)
     mcp.tool()(tool_fn)
