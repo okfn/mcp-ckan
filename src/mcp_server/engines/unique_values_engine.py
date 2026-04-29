@@ -41,6 +41,7 @@ import pandas as pd
 
 from mcp_server import DataToolOutput
 from mcp_server.engines.filters import build_filter_params, apply_filters, build_filter_doc
+from mcp_server.engines.responses import text_result
 
 
 def load_unique_values_dataset(mcp, config, yaml_path):
@@ -79,8 +80,12 @@ def load_unique_values_dataset(mcp, config, yaml_path):
         }
 
         if response_template:
-            return response_template.format(**context)
-        return f"Found {len(values)} unique values {filter_label}:\n{list_str}"
+            text = response_template.format(**context)
+        else:
+            text = f"Found {len(values)} unique values {filter_label}:\n{list_str}"
+
+        table = [[column]] + [[v] for v in list_values]
+        return text_result(text, source_url, table=table)
 
     tool_fn.__signature__ = inspect.Signature(filter_params, return_annotation=DataToolOutput)
     tool_fn.__annotations__["return"] = DataToolOutput
