@@ -13,6 +13,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp_server.engines import load_dataset
 from mcp_server.registry import PluginsRegistry
 from mcp_server.settings import MCP_TRANSPORT, MCP_HOST, MCP_PORT
+from mcp_server.tools.resources_catalog import register_core_tools
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +69,16 @@ def load_yaml_plugins(registry):
             load_dataset(plugin_registry, resource)
 
 
+def load_core_tools(registry, mcp):
+    """Register server-level tools present on every instance.
+
+    Today that is the resource catalog (``core_list_available_resources``),
+    which lets the LLM answer "what resources/visualizers exist?" with links;
+    resources themselves are not autodiscovered by the model.
+    """
+    register_core_tools(registry.for_plugin("core"), mcp)
+
+
 def create_mcp_server(host, port):
     """Create MCP server with settings from environment variables"""
     mcp = FastMCP("Demo", host=host, port=port, streamable_http_path="/")
@@ -75,6 +86,7 @@ def create_mcp_server(host, port):
     load_python_plugins(registry)
     load_python_resources(registry)
     load_yaml_plugins(registry)
+    load_core_tools(registry, mcp)
     # Publish the composed doctrine on the standard MCP `instructions` field
     mcp._mcp_server.instructions = registry.build_instructions()
     return mcp
