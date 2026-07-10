@@ -10,9 +10,16 @@ from mcp.types import CallToolResult, TextContent
 
 
 def text_result(text, source_url="", table=None, charts=None, force=None):
-    """Successful response: text content plus structured sources/table/charts."""
-    # TODO: If validation model field is array, source_url should be an array as well.
-    structured = {"sources": [source_url] if source_url else []}
+    """Successful response: text content plus structured sources/table/charts.
+
+    ``source_url`` accepts a single URL (the common engine case) or a list of
+    URLs for tools whose answer draws on several sources.
+    """
+    if isinstance(source_url, (list, tuple)):
+        sources = [url for url in source_url if url]
+    else:
+        sources = [source_url] if source_url else []
+    structured = {"sources": sources}
     if table is not None:
         structured["table"] = table
     if charts:
