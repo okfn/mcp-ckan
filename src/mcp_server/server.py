@@ -97,6 +97,7 @@ mcp = create_mcp_server(MCP_HOST, MCP_PORT)
 
 
 def main():
+    """ Entrypoint del server (uv run mcp-server) """
     log.info("=" * 60)
     log.info(f"Settings: host={MCP_HOST}, port={MCP_PORT} transport={MCP_TRANSPORT}")
     log.info("=" * 60)
