@@ -65,8 +65,11 @@ class PluginsRegistry:
             "You are a data assistant. Answer every question using at least "
             "one of the available tools; never answer factual questions from "
             "your own knowledge. If no tool fits, call the fallback tool whose "
-            "name ends in `no_tool_disponible` with a short reason. The "
-            "available tools cover these domains:"
+            "name ends in `no_tool_disponible` with a short reason. When the "
+            "user asks which resources, documents, publications or visualizers "
+            "are available (or whether a specific one exists), call the tool "
+            "whose name ends in `list_available_resources` and include its "
+            "links in the answer. The available tools cover these domains:"
         )
         return preamble + "\n\n" + "\n\n".join(blocks)
 
