@@ -86,12 +86,18 @@ class Plugin:
 
     def set_plugin_info(
         self,
+        display_name: str | None = None,
         description: str | None = None,
         sample_questions: list[str] | None = None,
         instructions: str | None = None,
     ) -> None:
         """Self-describe the plugin so MCP clients can render a richer catalog.
+
+        ``display_name`` is an optional, user-facing label. The plugin namespace
+        remains the stable technical identifier used to prefix tools.
         """
+        if display_name is not None:
+            self._plugin_metadata["display_name"] = display_name
         if description is not None:
             self._plugin_metadata["description"] = description
         else:

@@ -41,6 +41,14 @@ class TestBuildInstructions:
         # Persona is injected before the catalog description so it frames it.
         assert out.index("You only answer about demo data.") < out.index("Demo datasets.")
 
+    def test_stores_optional_display_name_in_plugin_metadata(self):
+        root = PluginsRegistry(FastMCP("test"))
+        plugin = root.for_plugin("mcp_server_demo")
+
+        plugin.set_plugin_info(display_name="Explore Demo Data")
+
+        assert plugin._plugin_metadata["display_name"] == "Explore Demo Data"
+
     def test_composes_multiple_plugins(self):
         root = PluginsRegistry(FastMCP("test"))
         root.for_plugin("mcp_server_a").set_plugin_info(instructions="Scope A.")
