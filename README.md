@@ -256,7 +256,10 @@ def register_tools(registry):
     def list_cities() -> DataToolOutput:
         """Return the top 3 cities by population."""
         return CallToolResult(
-            content=[TextContent(type="text", text="Found 3 cities sorted by population.")],
+            content=[TextContent(type="text", text=(
+                "The 3 most populated cities are Tokyo (37,400,068), "
+                "Delhi (30,290,936) and Shanghai (27,058,479)."
+            ))],
             structuredContent={
                 "sources": ["https://example.org/cities-data"],
                 "table": [
@@ -268,6 +271,12 @@ def register_tools(registry):
             },
         )
 ```
+
+Note that `content` repeats the facts: the LLM composes its reply only
+from `content` (it is never told a table is displayed), so for small
+results include the values there too. For large results, keep `content`
+to the top-line facts and row count and send the full table only in
+`structuredContent`.
 
 You can check the [source code](./src/mcp_server/__init__.py) for more information on `DataToolOutput`.
 
