@@ -49,6 +49,14 @@ class TestBuildInstructions:
 
         assert plugin._plugin_metadata["display_name"] == "Explore Demo Data"
 
+    def test_stores_optional_limitations_in_plugin_metadata(self):
+        root = PluginsRegistry(FastMCP("test"))
+        plugin = root.for_plugin("mcp_server_demo")
+
+        plugin.set_plugin_info(limitations=["Only covers demo data."])
+
+        assert plugin._plugin_metadata["limitations"] == ["Only covers demo data."]
+
     def test_composes_multiple_plugins(self):
         root = PluginsRegistry(FastMCP("test"))
         root.for_plugin("mcp_server_a").set_plugin_info(instructions="Scope A.")

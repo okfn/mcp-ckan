@@ -89,12 +89,15 @@ class Plugin:
         display_name: str | None = None,
         description: str | None = None,
         sample_questions: list[str] | None = None,
+        limitations: list[str] | None = None,
         instructions: str | None = None,
     ) -> None:
         """Self-describe the plugin so MCP clients can render a richer catalog.
 
         ``display_name`` is an optional, user-facing label. The plugin namespace
         remains the stable technical identifier used to prefix tools.
+        ``limitations`` describes current boundaries that clients may surface
+        alongside sample questions.
         """
         if display_name is not None:
             self._plugin_metadata["display_name"] = display_name
@@ -106,6 +109,8 @@ class Plugin:
             self._plugin_metadata["sample_questions"] = list(sample_questions)
         else:
             log.warning(f"Plugin {self._namespace} did not provide sample questions")
+        if limitations is not None:
+            self._plugin_metadata["limitations"] = list(limitations)
         if instructions is not None:
             self._plugin_metadata["instructions"] = instructions
         else:
